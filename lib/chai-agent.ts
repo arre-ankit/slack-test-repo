@@ -1,7 +1,7 @@
 'use server'
 
 export const chaiAgent = async (content: string) => {
-	const api = `https://staging-api.langbase.com/${process.env.LANGBASE_USER_NAME}/${process.env.LANGBASE_AGENT_NAME}`;
+	const api = `https://staging-api.langbase.com/${process.env.CHAI_USER_NAME}/${process.env.CHAI_AGENT_NAME}`;
     const response = await fetch(api, {
         method: 'POST',
         headers: {
