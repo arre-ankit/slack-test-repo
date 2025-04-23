@@ -19,7 +19,7 @@ export const runAgent = async (content: string): Promise<{ data: any | null; err
     };
   }
 
-  const api = `https://staging.api.langbase.com/${ownerLogin}/${agentName}`;
+  const api = `https://staging-api.langbase.com/${ownerLogin}/${agentName}`;
   
   try {
     // Validate input
