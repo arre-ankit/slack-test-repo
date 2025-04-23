@@ -1,7 +1,5 @@
 'use server';
 
-import { error } from "console";
-
 /**
  * Runs an AI agent with the provided content and returns the response
  * @param content The input content to process
@@ -42,7 +40,7 @@ export const runAgent = async (content: string): Promise<{ data: any | null; err
     });
 
     if (!response.ok) {
-      console.error(`API request failed: ${error}`);
+      console.error(`API request failed: ${response.statusText}`);
       return {
         data: null,
         error: 'Something went wrong while running the agent'
