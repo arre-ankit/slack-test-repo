@@ -1,11 +1,11 @@
 import type { SlackEvent } from '@slack/web-api';
 import { waitUntil } from '@vercel/functions';
 import { verifyRequest, getBotId } from '../lib/slack-utils';
-import { appMentionChai } from '../lib/app-mention-chai';
+import { appMentionAgent } from '../lib/app-mention-agent';
 import {
-	assistantThreadMessageChai,
-	assistantMessageChai
-} from '../lib/handle-message-chai';
+	assistantThreadMessageAgent,
+	assistantMessageAgent
+} from '../lib/handle-message-agent';
 
 export async function POST(request: Request) {
 	const rawBody = await request.json();
@@ -27,8 +27,13 @@ export async function POST(request: Request) {
 	}
 
 	try {
-		const botUserId = await getBotId();
+		const botUserIdResult = await getBotId();
+		if (!botUserIdResult.data) {
+			console.error('Error getting bot ID:', botUserIdResult.error);
+			return new Response('Error getting bot ID', { status: 500 });
+		}
 
+		const botUserId = botUserIdResult.data;
 		const event = payload.event as SlackEvent;
 
 		const isAppMention = event.type === 'app_mention';
@@ -43,15 +48,15 @@ export async function POST(request: Request) {
 			event.bot_id !== botUserId;
 
 		if (isAppMention) {
-			waitUntil(appMentionChai(event, botUserId));
+			waitUntil(appMentionAgent({event, botUserId}));
 		}
 
 		if (isAssistantThreadStarted) {
-			waitUntil(assistantThreadMessageChai(event));
+			waitUntil(assistantThreadMessageAgent(event));
 		}
 
 		if (isMessage) {
-			waitUntil(assistantMessageChai(event, botUserId));
+			waitUntil(assistantMessageAgent({event, botUserId}));
 		}
 
 		return new Response('Success!', { status: 200 });
