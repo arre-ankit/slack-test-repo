@@ -48,7 +48,7 @@ export async function POST(request: Request) {
 			event.bot_id !== botUserId;
 
 		if (isAppMention) {
-			waitUntil(appMentionAgent({event, botUserId}));
+			waitUntil(appMentionAgent({ event, botUserId }));
 		}
 
 		if (isAssistantThreadStarted) {
@@ -56,7 +56,7 @@ export async function POST(request: Request) {
 		}
 
 		if (isMessage) {
-			waitUntil(assistantMessageAgent({event, botUserId}));
+			waitUntil(assistantMessageAgent({ event, botUserId }));
 		}
 
 		return new Response('Success!', { status: 200 });

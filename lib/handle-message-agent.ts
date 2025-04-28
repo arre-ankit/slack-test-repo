@@ -86,69 +86,61 @@ export async function assistantMessageAgent({
 
 	try {
 		// Update status to indicate agent is thinking
-		const status = 'agent is thinking...';
+		const status = 'Agent is thinking...';
 
 		await client.assistant.threads.setStatus({
 			channel_id: channel,
 			thread_ts,
 			status
 		});
-	} catch (error) {
-		console.error('Error in assistantMessageAgent:', error);
-		return {
-			success: false,
-			error: `Something went wrong while updating status. Please try again.`
-		};
-	}
 
-	// Fetch thread messages
-	const messagesResult = await getThread({
-		channel_id: channel,
-		thread_ts,
-		botUserId
-	});
-
-	if (messagesResult.error) {
-		console.error(
-			'Error processing thread messages:',
-			messagesResult.error
-		);
-		return {
-			success: false,
-			error: 'Something went wrong while processing thread messages'
-		};
-	}
-
-	const messages = messagesResult.data;
-
-	if (!messages || messages.length === 0) {
-		return {
-			success: false,
-			error: 'No messages found in thread'
-		};
-	}
-
-	// Prepare content for agent
-	const content = messages.map(m => m.content).join('\n');
-
-	// Process with agent
-	const agentResult = await runAgent(content);
-
-	if (agentResult.error) {
-		console.error('Agent processing error:', agentResult.error);
-		await client.chat.postMessage({
-			channel: channel,
-			thread_ts: thread_ts,
-			text: `Something went wrong while processing the message. Please try again.`
+		// Fetch thread messages
+		const messagesResult = await getThread({
+			channel_id: channel,
+			thread_ts,
+			botUserId
 		});
 
-		return {
-			success: false,
-			error: 'Something went wrong while processing the message. Please try again.'
-		};
-	}
+		if (messagesResult.error) {
+			console.error(
+				'Error processing thread messages:',
+				messagesResult.error
+			);
+			return {
+				success: false,
+				error: 'Something went wrong while processing thread messages'
+			};
+		}
 
-	try {
+		const messages = messagesResult.data;
+
+		if (!messages || messages.length === 0) {
+			return {
+				success: false,
+				error: 'No messages found in thread'
+			};
+		}
+
+		// Prepare content for agent
+		const content = messages.map(m => m.content).join('\n');
+
+		// Process with agent
+		const agentResult = await runAgent(content);
+
+		if (agentResult.error) {
+			console.error('Agent processing error:', agentResult.error);
+			await client.chat.postMessage({
+				channel: channel,
+				thread_ts: thread_ts,
+				text: `Something went wrong while processing the message. Please try again.`
+			});
+
+			return {
+				success: false,
+				error: 'Something went wrong while processing the message. Please try again.'
+			};
+		}
+
 		// Post agent response
 		await client.chat.postMessage({
 			channel: channel,
@@ -165,6 +157,18 @@ export async function assistantMessageAgent({
 				}
 			]
 		});
+
+		// Clear status message
+		await client.assistant.threads.setStatus({
+			channel_id: channel,
+			thread_ts,
+			status: ''
+		});
+
+		return {
+			success: true,
+			error: null
+		};
 	} catch (error) {
 		console.error('Error in assistantMessageAgent:', error);
 		return {
@@ -172,24 +176,4 @@ export async function assistantMessageAgent({
 			error: 'Something went wrong while posting the response message. Please try again.'
 		};
 	}
-
-	try {
-		// Clear status message
-		await client.assistant.threads.setStatus({
-			channel_id: channel,
-			thread_ts,
-			status: ''
-		});
-	} catch (error) {
-		console.error('Error in assistantMessageAgent:', error);
-		return {
-			success: false,
-			error: `Something went wrong while clearing status. Please try again.`
-		};
-	}
-
-	return {
-		success: true,
-		error: null
-	};
 }

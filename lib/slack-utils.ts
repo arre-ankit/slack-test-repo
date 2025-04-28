@@ -60,10 +60,18 @@ export const verifyRequest = async ({
 	request: Request;
 	rawBody: string;
 }) => {
-	const validRequest = await isValidSlackRequest({ request, rawBody });
-	const isReqNotValid = !validRequest || requestType !== 'event_callback';
-	if (isReqNotValid) {
-		return new Response('Invalid request', { status: 400 });
+	try {
+		const validRequest = await isValidSlackRequest({ request, rawBody });
+		const isReqNotValid = !validRequest || requestType !== 'event_callback';
+		if (isReqNotValid) {
+			return new Response('Invalid request', { status: 400 });
+		}
+	} catch (error) {
+		console.error('Error in verifyRequest:', error);
+		return new Response(
+			'Something went wrong while verifying request. Please try again.',
+			{ status: 500 }
+		);
 	}
 };
 

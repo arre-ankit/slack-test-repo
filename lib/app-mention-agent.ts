@@ -95,7 +95,7 @@ export async function appMentionAgent({
 		}
 
 		const { thread_ts, channel } = event;
-		const status = 'agent is thinking...';
+		const status = 'Agent is thinking...';
 
 		// Post initial status message
 		const statusResult = await postStatusMessage({ event, status });
@@ -114,80 +114,61 @@ export async function appMentionAgent({
 
 		// Handle thread messages
 		if (thread_ts) {
-			try {
-				const messagesResult = await getThread({
-					channel_id: channel,
-					thread_ts,
-					botUserId
-				});
+			const messagesResult = await getThread({
+				channel_id: channel,
+				thread_ts,
+				botUserId
+			});
 
-				if (messagesResult.error) {
-					console.error(
-						'Error processing thread messages:',
-						messagesResult.error
-					);
-					return {
-						success: false,
-						error: 'Something went wrong while processing thread messages'
-					};
-				}
-
-				const messages = messagesResult.data;
-
-				if (!messages || messages.length === 0) {
-					return {
-						success: false,
-						error: 'Failed to retrieve thread messages or thread is empty'
-					};
-				}
-
-				const content = messages.map(m => m.content).join('\n');
-				agentResult = await runAgent(content);
-			} catch (threadError) {
-				console.error('Error processing thread messages:', threadError);
+			if (messagesResult.error) {
+				console.error(
+					'Error processing thread messages:',
+					messagesResult.error
+				);
 				return {
 					success: false,
 					error: 'Something went wrong while processing thread messages'
 				};
 			}
+
+			const messages = messagesResult.data;
+
+			if (!messages || messages.length === 0) {
+				return {
+					success: false,
+					error: 'Failed to retrieve thread messages or thread is empty'
+				};
+			}
+
+			const content = messages.map(m => m.content).join('\n');
+			agentResult = await runAgent(content);
 		}
 		// Handle channel messages
 		else {
-			try {
-				const channelMessagesResult = await getChannelMessages({
-					channel_id: channel
-				});
+			const channelMessagesResult = await getChannelMessages({
+				channel_id: channel
+			});
 
-				if (channelMessagesResult.error) {
-					console.error(
-						'Error processing channel messages:',
-						channelMessagesResult.error
-					);
-					return {
-						success: false,
-						error: 'Something went wrong while processing channel messages'
-					};
-				}
-
-				const channelMessages = channelMessagesResult.data;
-
-				if (!channelMessages || channelMessages.length === 0) {
-					agentResult = { success: false, error: 'No context found' };
-				} else {
-					const content = channelMessages
-						.map(msg => msg.content)
-						.join('\n');
-					agentResult = await runAgent(content);
-				}
-			} catch (channelError) {
+			if (channelMessagesResult.error) {
 				console.error(
 					'Error processing channel messages:',
-					channelError
+					channelMessagesResult.error
 				);
 				return {
 					success: false,
-					error: 'Something went wrong with channel messages processing'
+					error: 'Something went wrong while processing channel messages'
 				};
+			}
+
+			const channelMessages = channelMessagesResult.data;
+
+			if (!channelMessages || channelMessages.length === 0) {
+				agentResult = { success: false, error: 'No context found' };
+			} else {
+				const content = channelMessages
+					.map(msg => msg.content)
+					.join('\n');
+				agentResult = await runAgent(content);
 			}
 		}
 
